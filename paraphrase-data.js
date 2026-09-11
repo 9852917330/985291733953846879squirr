@@ -1,1 +1,1 @@
-// Removed from the IELTS Alien public build.
+// Removed from the IELTSquirrel public build.
