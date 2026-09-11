@@ -3,7 +3,7 @@
   "short_name": "IELTSquirrel",
   "description": "High-level IELTS Speaking and Writing practice for international learners.",
   "lang": "en",
-  "start_url": "./index.html?v=92",
+  "start_url": "./index.html?v=93",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#1565c0",
