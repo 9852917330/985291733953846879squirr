@@ -1,0 +1,29 @@
+{
+  "name": "IELTS Alien - Speaking & Writing Master",
+  "short_name": "IELTS Alien",
+  "description": "High-level IELTS Speaking and Writing practice for international learners.",
+  "lang": "en",
+  "start_url": "./index.html?v=90",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1565c0",
+  "icons": [
+    {
+      "src": "app-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "app-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "app-icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "scope": "./"
+}
