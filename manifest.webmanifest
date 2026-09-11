@@ -1,9 +1,9 @@
 {
-  "name": "IELTSquirrel - Speaking & Writing Master",
+  "name": "IELTSquirrel - Master IELTS Speaking & Writing",
   "short_name": "IELTSquirrel",
-  "description": "High-level IELTS Speaking and Writing practice for international learners.",
+  "description": "IELTSquirrel — Master IELTS Speaking & Writing with model answers, Core Stories and collocations.",
   "lang": "en",
-  "start_url": "./index.html?v=94",
+  "start_url": "./index.html?v=96",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#1565c0",
