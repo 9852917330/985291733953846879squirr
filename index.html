@@ -4,12 +4,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="robots" content="index,follow">
-  <meta name="description" content="IELTSquirrel is a focused IELTS Speaking and Writing practice app with Band 8+ model answers, Core Stories and collocations.">
+  <meta name="description" content="IELTSquirrel is a focused IELTS Speaking and Writing practice app with model answers, Core Stories and collocations.">
   <meta name="application-name" content="IELTSquirrel">
   <meta name="theme-color" content="#1565c0">
   <meta name="ieltsquirrel-build" content="2026.09.11-v93">
   <title>IELTSquirrel - Speaking &amp; Writing Master</title>
-  <link rel="manifest" href="manifest.webmanifest?v=93">
+  <link rel="manifest" href="manifest.webmanifest?v=94">
   <link rel="icon" href="app-icon-32.png">
   <link rel="apple-touch-icon" href="app-icon-180.png">
   <style>
@@ -140,13 +140,13 @@ header{position:sticky;top:0;z-index:50;border-bottom:1px solid var(--line);back
  function renderHome(){
    setNav(''); document.title='IELTSquirrel - Speaking & Writing Master';
    const main=document.getElementById('app'); main.className='home-main';
-   main.innerHTML=`<section class="home-hero"><h1>IELTSquirrel</h1><p>Speaking &amp; Writing Master</p></section><section class="home-menu">${PAGES.map(([id,label],i)=>`<a class="home-link" href="#${id}"><span class="home-index">${String(i+1).padStart(2,'0')}</span><span class="home-title">${esc(label)}</span><span class="home-arrow">→</span></a>`).join('')}</section>`;
+   main.innerHTML=`<section class="home-hero"><h1>IELTSquirrel</h1><p>Master IELTS Speaking &amp; Writing</p></section><section class="home-menu">${PAGES.map(([id,label],i)=>`<a class="home-link" href="#${id}"><span class="home-index">${String(i+1).padStart(2,'0')}</span><span class="home-title">${esc(label)}</span><span class="home-arrow">→</span></a>`).join('')}</section>`;
  }
  function renderCollocationPage(){
    setNav('collocations'); document.title='Collocations – IELTSquirrel'; current={section:null,all:[],visible:[]};
    const C=window.COLLOCATION_DATA||{items:[],topics:[],frames:[]};
    const main=document.getElementById('app'); main.className='study-main';
-   main.innerHTML=`<section class="study-hero"><div><h1>Collocations</h1><p>300 natural, high-value collocations across 20 common IELTS Writing Task 2 topics. Suitable for Band 8+ writing when used accurately and in context.</p></div><div class="study-stat"><span class="study-pill"><b>300</b> collocations</span><span class="study-pill"><b>20</b> topics</span><span class="study-pill"><b>Task 2</b> focused</span></div></section><section class="study-principle"><strong>Band 8+ comes from precise, natural word combinations — not rare vocabulary.</strong><p>Learn each item as one chunk, then use it only where its meaning and grammar fit. Accuracy and flexibility matter more than forcing sophisticated language into every sentence.</p></section><section class="rescue-wrap"><h2 class="study-section-title">Universal writing frames</h2><div class="rescue-grid">${(C.frames||[]).map(x=>`<div class="rescue-card"><b>${esc(x[0])}</b><span>${esc(x[1])}</span></div>`).join('')}</div></section><section class="study-toolbar"><div class="study-toolbar-inner"><input class="study-search" id="collSearch" placeholder="Search collocation, meaning or topic..."><select class="study-select" id="collTopic"><option value="">All 20 topics</option>${(C.topics||[]).map(x=>`<option value="${esc(x.en)}">${esc(x.en)}</option>`).join('')}</select><div class="study-count" id="collCount"></div></div></section><section class="study-grid" id="collGrid"></section><div class="study-empty" id="collEmpty" hidden>No matching collocations.</div><section class="study-footer-box"><h2>Training protocol</h2><ol><li>Learn the whole collocation, not isolated words.</li><li>Write one original sentence using it in a realistic IELTS argument.</li><li>Recycle the same collocation across different essay questions only when the meaning fits.</li><li>Prioritise accuracy, collocation control and grammatical range over unusual vocabulary.</li></ol></section>`;
+   main.innerHTML=`<section class="study-hero"><div><h1>Collocations</h1><p>300 natural, high-value collocations across 20 common IELTS Writing Task 2 topics.</p></div><div class="study-stat"><span class="study-pill"><b>300</b> collocations</span><span class="study-pill"><b>20</b> topics</span><span class="study-pill"><b>Task 2</b> focused</span></div></section><section class="rescue-wrap"><h2 class="study-section-title">Universal writing frames</h2><div class="rescue-grid">${(C.frames||[]).map(x=>`<div class="rescue-card"><b>${esc(x[0])}</b><span>${esc(x[1])}</span></div>`).join('')}</div></section><section class="study-toolbar"><div class="study-toolbar-inner"><input class="study-search" id="collSearch" placeholder="Search collocation, meaning or topic..."><select class="study-select" id="collTopic"><option value="">All 20 topics</option>${(C.topics||[]).map(x=>`<option value="${esc(x.en)}">${esc(x.en)}</option>`).join('')}</select><div class="study-count" id="collCount"></div></div></section><section class="study-grid" id="collGrid"></section><div class="study-empty" id="collEmpty" hidden>No matching collocations.</div><section class="study-footer-box"><h2>Training protocol</h2><ol><li>Learn the whole collocation, not isolated words.</li><li>Write one original sentence using it in a realistic IELTS argument.</li><li>Recycle the same collocation across different essay questions only when the meaning fits.</li><li>Prioritise accuracy, collocation control and grammatical range over unusual vocabulary.</li></ol></section>`;
    const grid=document.getElementById('collGrid'), search=document.getElementById('collSearch'), topic=document.getElementById('collTopic'), count=document.getElementById('collCount'), empty=document.getElementById('collEmpty');
    function render(){
      const q=norm(search.value).trim(), t=topic.value; let rows=(C.items||[]).filter(x=>(!t||x.topic===t)&&(!q||norm([x.en,x.meaning,x.topic].join(' ')).includes(q)));
