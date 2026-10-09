@@ -1,0 +1,50 @@
+name: Install IELTSquirrel speaking audio
+
+on:
+  push:
+    paths:
+      - 'speaking-qa-*.zip'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: speaking-audio-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extract verified question audio
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+          import shutil
+
+          archives = sorted(Path('.').glob('speaking-qa-*.zip'))
+          for archive in archives:
+              with ZipFile(archive) as bundle:
+                  for entry in bundle.infolist():
+                      path = Path(entry.filename)
+                      if entry.is_dir():
+                          continue
+                      if path.parts[:3] != ('audio', 'ava-us', 'qa') or '..' in path.parts or path.suffix != '.mp3':
+                          raise ValueError(f'Unexpected file in {archive}: {entry.filename}')
+                      path.parent.mkdir(parents=True, exist_ok=True)
+                      with bundle.open(entry) as source, path.open('wb') as target:
+                          shutil.copyfileobj(source, target)
+              archive.unlink()
+          print(f'Installed {len(archives)} audio archives.')
+          PY
+      - name: Commit audio files
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Install individual Speaking answer audio"
+          git push origin HEAD:"${GITHUB_REF_NAME}"
