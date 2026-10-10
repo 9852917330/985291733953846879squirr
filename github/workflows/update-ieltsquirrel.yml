@@ -1,0 +1,70 @@
+name: Update IELTSquirrel v113
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+
+concurrency:
+  group: ieltsquirrel-website-update
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+      - name: Verify and install the complete website update
+        run: |
+          python3 - <<'PYTHON'
+          from pathlib import Path,PurePosixPath
+          import hashlib,json,zipfile
+          
+          root=Path.cwd()
+          first=root/'IELTSquirrel_v113_Update_1.zip'
+          if not first.is_file():raise SystemExit('Upload the IELTSquirrel v113 update ZIP files to the repository root first.')
+          with zipfile.ZipFile(first) as z:manifest=json.loads(z.read('IELTSquirrel-update-manifest.json'))
+          if manifest.get('version')!='v113-batch1':raise SystemExit('Unexpected update version.')
+          payload={}
+          for archive in manifest['archives']:
+              if Path(archive).name!=archive:raise SystemExit('Invalid archive name.')
+              with zipfile.ZipFile(root/archive) as z:
+                  for entry in z.infolist():
+                      name=entry.filename
+                      if name=='IELTSquirrel-update-manifest.json':continue
+                      p=PurePosixPath(name)
+                      if p.is_absolute() or '..' in p.parts or name.startswith('.github/') or name not in manifest['files']:raise SystemExit('Unexpected file in update: '+name)
+                      if entry.file_size>20_000_000:raise SystemExit('Oversized update file: '+name)
+                      data=z.read(entry)
+                      if name in payload and payload[name]!=data:raise SystemExit('Conflicting update files.')
+                      payload[name]=data
+          if set(payload)!=set(manifest['files']):raise SystemExit('One or more update files are missing.')
+          for name,data in payload.items():
+              if hashlib.sha256(data).hexdigest()!=manifest['files'][name]:raise SystemExit('Integrity check failed: '+name)
+          index=root/'index.html'
+          if not index.is_file() or hashlib.sha256(index.read_bytes()).hexdigest() not in manifest['allowed_index_sha256']:
+              raise SystemExit('The website has changed since this update was prepared. Stop and merge the newer website before installing.')
+          for name,data in payload.items():
+              target=root/name
+              if target.is_symlink() or any(p.is_symlink() for p in target.parents if p!=root):raise SystemExit('Unexpected symbolic link.')
+          for name,data in payload.items():
+              target=root/name;target.parent.mkdir(parents=True,exist_ok=True);target.write_bytes(data)
+          print('Installed IELTSquirrel v113: Batch 1 audio, squirrel app icons, installation button and indexable lesson pages.')
+          PYTHON
+      - name: Save updated website
+        run: |
+          git add -- '*.html' '*.js' '*.css' '*.json' '*.webmanifest' '*.png' '*.svg' robots.txt sitemap.xml CNAME .nojekyll audio/speaking-practice visuals
+          if ! git diff --cached --quiet; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit -m "Update IELTSquirrel: Batch 1 audio, app installation and SEO"
+            git push origin "HEAD:${{ github.event.repository.default_branch }}"
+          fi
+      - name: Build GitHub Pages
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api --method POST "repos/$GITHUB_REPOSITORY/pages/builds"
