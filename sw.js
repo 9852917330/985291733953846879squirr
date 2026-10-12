@@ -1,4 +1,4 @@
-const CACHE='ieltsquirrel-v119-new-logo';
+const CACHE='ieltsquirrel-v120-centered-header';
 const SHELL=['./','./app.css','./app-runtime.js','./seo-routes.js','./router.js','./pwa.js','./speaking-practice-audio-data.js','./speaking-practice-audio.js','./manifest.webmanifest','./brand-logo-v119.png','./favicon-96.png','./app-icon-192-v119.png','./app-icon-512-v119.png'];
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(SHELL)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key.startsWith('ieltsquirrel-')&&key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));
