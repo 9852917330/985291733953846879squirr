@@ -2,28 +2,28 @@
   "id": "./?ieltsquirrel_pwa=v98",
   "name": "IELTSquirrel - Master IELTS Speaking & Writing",
   "short_name": "IELTSquirrel",
-  "description": "IELTSquirrel — Master IELTS Speaking & Writing with model answers, Core Stories and collocations.",
+  "description": "Free IELTS Speaking and Writing practice with model answers, Core Stories, writing templates and collocations.",
   "lang": "en",
-  "start_url": "./index.html?ieltsquirrel_pwa=v98&build=v112",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#1565c0",
+  "background_color": "#d9ceb8",
+  "theme_color": "#d9ceb8",
   "icons": [
     {
-      "src": "app-icon-192-v98.png",
+      "src": "app-icon-192-v114.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "app-icon-512-v98.png",
+      "src": "app-icon-512-v114.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "app-icon-maskable-512-v98.png",
+      "src": "app-icon-maskable-512-v114.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"

@@ -1,5 +1,16 @@
-const CACHE='ieltsquirrel-v112';
-const ASSETS=['./','./index.html?ieltsquirrel_pwa=v98&build=v112','./manifest-v112.webmanifest?v=112','./manifest.webmanifest?v=112','./app-icon-32-v98.png','./app-icon-180-v98.png','./app-icon-192-v98.png','./app-icon-512-v98.png','./app-icon-maskable-512-v98.png','./squirrel-logo.svg'];
-self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS).catch(()=>{})))})
-self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))));self.clients.claim()})
-self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;if(e.request.destination==='audio'||new URL(e.request.url).pathname.endsWith('.mp3'))return;e.respondWith(fetch(e.request,{cache:'no-store'}).then(r=>{const copy=r.clone();caches.open(CACHE).then(c=>c.put(e.request,copy)).catch(()=>{});return r}).catch(()=>caches.match(e.request).then(r=>r||caches.match('./index.html?ieltsquirrel_pwa=v98&build=v112'))))})
+const CACHE='ieltsquirrel-v116-no-band';
+const SHELL=['./','./app.css','./app-runtime.js','./seo-routes.js','./router.js','./pwa.js','./speaking-practice-audio-data.js','./speaking-practice-audio.js','./manifest.webmanifest','./app-icon-192-v114.png','./app-icon-512-v114.png'];
+self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(SHELL)).then(()=>self.skipWaiting())));
+self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key.startsWith('ieltsquirrel-')&&key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));
+self.addEventListener('fetch',event=>{
+ const request=event.request,url=new URL(request.url);
+ if(request.method!=='GET'||url.origin!==self.location.origin||request.headers.has('range')||request.destination==='audio'||url.pathname.endsWith('.mp3'))return;
+ event.respondWith(fetch(request).then(response=>{
+   if(response.ok){const copy=response.clone();event.waitUntil(caches.open(CACHE).then(cache=>cache.put(request,copy)));}
+   return response;
+ }).catch(async()=>{
+   const cached=await caches.match(request);if(cached)return cached;
+   if(request.mode==='navigate')return (await caches.match('./'))||Response.error();
+   return Response.error();
+ }));
+});
