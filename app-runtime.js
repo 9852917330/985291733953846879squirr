@@ -336,7 +336,7 @@ window.SPEAKING_PRACTICE_UI = (() => {
   <h2 class="sp-question" id="spQuestion"></h2>
   <div class="sp-cues" id="spCues"></div>
   <div class="sp-answer-actions">
-    <button class="sp-btn primary sp-answer-btn" type="button" id="spAnswerBtn">Show model answer (8.0–9.0)</button>
+    <button class="sp-btn primary sp-answer-btn" type="button" id="spAnswerBtn">Show model answer</button>
   </div>
   <div class="sp-model-answer" id="spAnswer" hidden>
     <div class="sp-model-answer-head"><span>MODEL ANSWER</span></div>
@@ -374,7 +374,7 @@ window.SPEAKING_PRACTICE_UI = (() => {
   function hideAnswer() {
     if (!els.answer) return;
     els.answer.hidden = true;
-    els.answerBtn.textContent = 'Show model answer (8.0–9.0)';
+    els.answerBtn.textContent = 'Show model answer';
     els.answerBtn.setAttribute('aria-expanded', 'false');
   }
 

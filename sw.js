@@ -1,4 +1,4 @@
-const CACHE='ieltsquirrel-v116-no-band';
+const CACHE='ieltsquirrel-v117-button';
 const SHELL=['./','./app.css','./app-runtime.js','./seo-routes.js','./router.js','./pwa.js','./speaking-practice-audio-data.js','./speaking-practice-audio.js','./manifest.webmanifest','./app-icon-192-v114.png','./app-icon-512-v114.png'];
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(SHELL)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key.startsWith('ieltsquirrel-')&&key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));
