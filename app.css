@@ -1,5 +1,6 @@
 
-:root{color-scheme:light;--bg:#fff;--surface:#fff;--text:#15171c;--muted:#687080;--line:#e3e8ef;--accent:#1565c0;--key:#0b63ce;--soft:#f3f7fc;--on-accent:#fff;--plate:#fff;--core:#1565c0;--core-strong:#0b4a97;--core-soft:#eef5fd;--core-line:#a9cbf0}
+:root{color-scheme:light;--bg:#d8ccb8;--surface:#e9dfd0;--text:#111111;--muted:#5d554a;--line:#b9aa96;--accent:#9e1b16;--key:#9e1b16;--soft:#cec0ad;--on-accent:#fff8ef;--plate:#f7f0e6;--core:#9e1b16;--core-strong:#7f1511;--core-soft:#e3d5c2;--core-line:#bba58f}
+html[data-theme="light"]{color-scheme:light;--bg:#fff;--surface:#fff;--text:#15171c;--muted:#687080;--line:#e3e8ef;--accent:#1565c0;--key:#0b63ce;--soft:#f3f7fc;--on-accent:#fff;--plate:#fff;--core:#1565c0;--core-strong:#0b4a97;--core-soft:#eef5fd;--core-line:#a9cbf0}
 html[data-theme="dark"]{color-scheme:dark;--bg:#0b1311;--surface:#101a18;--text:#e6f4ef;--muted:#8ba9a1;--line:#1e302c;--accent:#5eead4;--key:#5eead4;--soft:#122320;--on-accent:#06120f;--plate:#e6f4ef;--core:#5eead4;--core-strong:#99f6e4;--core-soft:#0f221e;--core-line:#2f5f56}
 html[data-theme="rice"]{color-scheme:light;--bg:#d8ccb8;--surface:#e9dfd0;--text:#111111;--muted:#5d554a;--line:#b9aa96;--accent:#9e1b16;--key:#9e1b16;--soft:#cec0ad;--on-accent:#fff8ef;--plate:#f7f0e6;--core:#9e1b16;--core-strong:#7f1511;--core-soft:#e3d5c2;--core-line:#bba58f}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.5}button,input,select{font:inherit}button{color:inherit}.wrap{width:min(1760px,calc(100% - 28px));margin:auto}
@@ -273,3 +274,11 @@ header{position:sticky;top:0;z-index:50;border-bottom:1px solid var(--line);back
 
 
 .phrase dt{font-weight:800;color:var(--key)}.phrase dd{margin:0;color:var(--muted)}a.item-row{text-decoration:none;color:inherit;font:inherit}.pwa-install{flex:0 0 auto;padding:0 9px;margin:0;white-space:nowrap;font-size:.72rem;font-weight:800}.pwa-install[hidden]{display:none!important}@media(max-width:400px){.top{gap:5px}.actions{gap:4px}.brand{font-size:.86rem;gap:4px}.header-donate{padding:0 7px}.pwa-install{padding:0 7px}.actions .icon{min-width:30px}}@media(max-width:350px){.brand{font-size:.78rem}.mark{width:26px;height:30px;flex-basis:26px}.squirrel-mark{font-size:24px}.actions{gap:3px}.pwa-install{padding:0 5px}}#install-help{max-width:min(430px,calc(100% - 32px));border:1px solid var(--line);border-radius:16px;padding:24px;background:var(--surface);color:var(--text)}#install-help::backdrop{background:rgba(0,0,0,.5)}#install-help h2{margin-top:0}#install-help .icon{padding:0 16px}
+/* Keep the header controls visible at every desktop width. */
+.top{min-width:0}.brand{flex:0 0 auto}.actions{flex:0 0 auto;min-width:max-content;margin-left:auto!important}
+@media(min-width:1180px){
+  .top{flex-wrap:wrap!important;column-gap:12px}
+  .nav{order:3;flex:0 0 100%!important;width:100%!important;min-width:0!important;flex-wrap:wrap!important;justify-content:flex-start;overflow:visible!important;padding-bottom:6px!important}
+  .nav a{flex:0 0 auto}
+}
+@media(max-width:1179px){.nav{flex:none!important}.actions{flex-shrink:0}}
