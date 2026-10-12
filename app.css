@@ -282,3 +282,10 @@ header{position:sticky;top:0;z-index:50;border-bottom:1px solid var(--line);back
   .nav a{flex:0 0 auto}
 }
 @media(max-width:1179px){.nav{flex:none!important}.actions{flex-shrink:0}}
+
+/* The supplied squirrel artwork includes its own name; keep the whole logo visible. */
+.brand{display:block;flex:0 0 auto;line-height:0;min-width:0}
+.brand-logo{display:block;width:142px;max-width:100%;height:auto}
+@media(max-width:1179px){.top{flex-wrap:wrap!important;align-content:center}.brand-logo{width:125px}.actions{margin-left:auto!important}}
+@media(max-width:700px){.top{flex-wrap:wrap!important;column-gap:8px;row-gap:3px}.brand-logo{width:112px}}
+@media(max-width:360px){.brand-logo{width:98px}}
