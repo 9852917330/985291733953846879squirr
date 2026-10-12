@@ -1,71 +1,94 @@
-name: Install IELTSquirrel speaking audio
+name: Update IELTSquirrel v115
 
 on:
-  push:
-    paths:
-      - 'speaking-qa-*.zip'
-      - 'speaking-part2-*.zip'
   workflow_dispatch:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 concurrency:
-  group: speaking-audio-${{ github.ref }}
+  group: ieltsquirrel-website-update
   cancel-in-progress: false
 
 jobs:
-  install:
+  update:
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.ref_name }}
-
-      - name: Extract speaking audio
+          ref: ${{ github.event.repository.default_branch }}
+      - name: Install the verified update
         run: |
-          python3 - <<'PY'
+          python3 - <<'PYTHON'
+          from pathlib import Path,PurePosixPath
+          import hashlib,json,zipfile
+          
+          root=Path.cwd()
+          first=root/'IELTSquirrel_v115_Update_1.zip'
+          if not first.is_file():raise SystemExit('Upload the IELTSquirrel v115 update ZIP files to the repository root first.')
+          with zipfile.ZipFile(first) as z:manifest=json.loads(z.read('IELTSquirrel-update-manifest.json'))
+          if manifest.get('version')!='v115-complete-meanings':raise SystemExit('Unexpected update version.')
+          payload={}
+          for archive in manifest['archives']:
+              if Path(archive).name!=archive:raise SystemExit('Invalid archive name.')
+              with zipfile.ZipFile(root/archive) as z:
+                  for entry in z.infolist():
+                      name=entry.filename
+                      if name=='IELTSquirrel-update-manifest.json':continue
+                      p=PurePosixPath(name)
+                      if p.is_absolute() or '..' in p.parts or name.startswith('.github/') or name not in manifest['files']:raise SystemExit('Unexpected file in update: '+name)
+                      if entry.file_size>20_000_000:raise SystemExit('Oversized update file: '+name)
+                      data=z.read(entry)
+                      if name in payload and payload[name]!=data:raise SystemExit('Conflicting update files.')
+                      payload[name]=data
+          if set(payload)!=set(manifest['files']):raise SystemExit('One or more update files are missing.')
+          for name,data in payload.items():
+              if hashlib.sha256(data).hexdigest()!=manifest['files'][name]:raise SystemExit('Integrity check failed: '+name)
+          index=root/'index.html'
+          if not index.is_file() or hashlib.sha256(index.read_bytes()).hexdigest() not in manifest['allowed_index_sha256']:
+              raise SystemExit('The website has changed since this update was prepared. Stop and merge the newer website before installing.')
+          for name,data in payload.items():
+              target=root/name
+              if target.is_symlink() or any(p.is_symlink() for p in target.parents if p!=root):raise SystemExit('Unexpected symbolic link.')
+          for name,data in payload.items():
+              target=root/name;target.parent.mkdir(parents=True,exist_ok=True);target.write_bytes(data)
+          print('Installed IELTSquirrel v115 checkpoint: app fixes, all 4188 phrase meanings; existing audio preserved.')
+          PYTHON
+      - name: Verify and prepare the whole website
+        run: |
+          python3 - <<'PYTHON'
           from pathlib import Path
-          from zipfile import ZipFile
-          import re
-          import shutil
-
-          archives = sorted([
-              *Path('.').glob('speaking-qa-*.zip'),
-              *Path('.').glob('speaking-part2-*.zip'),
-          ])
-          installed = 0
-          for archive in archives:
-              with ZipFile(archive) as bundle:
-                  for entry in bundle.infolist():
-                      if entry.is_dir():
-                          continue
-                      path = Path(entry.filename)
-                      qa = (
-                          len(path.parts) == 4
-                          and path.parts[:3] == ('audio', 'ava-us', 'qa')
-                          and re.fullmatch(r'speaking-part-[13]-\d+-q\d+\.mp3', path.name)
-                      )
-                      part2 = (
-                          len(path.parts) == 3
-                          and path.parts[:2] == ('audio', 'ava-us')
-                          and re.fullmatch(r'speaking-part-2-(?:core-)?\d+\.mp3', path.name)
-                      )
-                      if not (qa or part2):
-                          raise ValueError(f'Unexpected file: {entry.filename}')
-                      path.parent.mkdir(parents=True, exist_ok=True)
-                      with bundle.open(entry) as source, path.open('wb') as target:
-                          shutil.copyfileobj(source, target)
-                      installed += 1
-              archive.unlink()
-          print(f'Installed {installed} MP3 files from {len(archives)} archives.')
-          PY
-
-      - name: Commit audio files
+          import hashlib,json,os,shutil,zipfile
+          root=Path.cwd()
+          with zipfile.ZipFile('IELTSquirrel_v115_Update_1.zip') as z:
+              manifest=json.loads(z.read('IELTSquirrel-update-manifest.json'))
+          out=Path(os.environ['RUNNER_TEMP'])/'ieltsquirrel-pages'
+          out.mkdir(exist_ok=True)
+          for name,expected in manifest['deployment_files'].items():
+              source=root/name
+              if not source.is_file() or hashlib.sha256(source.read_bytes()).hexdigest()!=expected:
+                  raise SystemExit('Missing or changed website file: '+name+'. Restore it from the full website ZIP before deploying.')
+              target=out/name;target.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(source,target)
+          print('Verified all website files, including all 1026 audio files.')
+          PYTHON
+      - name: Save updated website
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
-          if git diff --cached --quiet; then exit 0; fi
-          git commit -m "Install Speaking audio files"
-          git push origin HEAD:"${GITHUB_REF_NAME}"
+          git add -- '*.html' '*.js' '*.css' '*.json' '*.webmanifest' '*.png' '*.svg' robots.txt sitemap.xml CNAME .nojekyll audio/speaking-practice visuals
+          if ! git diff --cached --quiet; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit -m "Update IELTSquirrel v115: complete English phrase meanings"
+            git push origin "HEAD:${{ github.event.repository.default_branch }}"
+          fi
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: ${{ runner.temp }}/ieltsquirrel-pages
+      - name: Deploy website
+        id: deployment
+        uses: actions/deploy-pages@v4
