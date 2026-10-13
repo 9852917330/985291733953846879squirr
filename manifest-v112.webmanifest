@@ -1,6 +1,6 @@
 {
   "id": "./?ieltsquirrel_pwa=v98",
-  "name": "IELTSquirrel - Master IELTS Speaking & Writing",
+  "name": "IELTSquirrel",
   "short_name": "IELTSquirrel",
   "description": "Free IELTS Speaking and Writing practice with model answers, Core Stories, writing templates and collocations.",
   "lang": "en",
@@ -11,19 +11,19 @@
   "theme_color": "#d9ceb8",
   "icons": [
     {
-      "src": "app-icon-192-v119.png",
+      "src": "app-icon-192-v121.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "app-icon-512-v119.png",
+      "src": "app-icon-512-v121.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "app-icon-maskable-512-v119.png",
+      "src": "app-icon-maskable-512-v121.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
