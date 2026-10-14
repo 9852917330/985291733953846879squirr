@@ -37,7 +37,7 @@ jobs:
           else:
               with zipfile.ZipFile(archive) as bundle:
                   manifest = json.loads(bundle.read('site-update-manifest.json'))
-                  if manifest.get('version') not in {'v123-clean-splash', 'v124-batch2', 'v125-branded-splash', 'v126-batch3', 'v127-batch4'}:
+                  if manifest.get('version') not in {'v123-clean-splash', 'v124-batch2', 'v125-branded-splash', 'v126-batch3', 'v127-batch4', 'v128-batch5'}:
                       raise SystemExit('Incorrect phone update version')
                   expected = manifest['files']
                   present = set(bundle.namelist()) - {'site-update-manifest.json'}
@@ -61,8 +61,8 @@ jobs:
                           raise SystemExit('Unsafe removal: ' + name)
                   audio_payload = {}
                   audio_archives = []
-                  if manifest['version'] in {'v124-batch2', 'v125-branded-splash', 'v126-batch3', 'v127-batch4'}:
-                      batch = {'v127-batch4': 4, 'v126-batch3': 3}.get(manifest['version'], 2)
+                  if manifest['version'] in {'v124-batch2', 'v125-branded-splash', 'v126-batch3', 'v127-batch4', 'v128-batch5'}:
+                      batch = {'v128-batch5': 5, 'v127-batch4': 4, 'v126-batch3': 3}.get(manifest['version'], 2)
                       start = (batch - 1) * 200 + 1
                       expected_audio = manifest['audio_files']
                       required_audio = {f'audio/speaking-practice/practice-{n:04d}.mp3' for n in range(start, start + 200)}
