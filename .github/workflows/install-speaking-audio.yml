@@ -36,7 +36,7 @@ jobs:
           else:
               with zipfile.ZipFile(archive) as bundle:
                   manifest = json.loads(bundle.read('site-update-manifest.json'))
-                  if manifest.get('version') != 'v123-clean-splash':
+                  if manifest.get('version') not in {'v123-clean-splash', 'v124-batch2'}:
                       raise SystemExit('Incorrect phone update version')
                   expected = manifest['files']
                   present = set(bundle.namelist()) - {'site-update-manifest.json'}
@@ -58,12 +58,46 @@ jobs:
                       path = PurePosixPath(name)
                       if len(path.parts) != 1 or name.startswith('.') or name in payload or not name.startswith(('IELTSquirrel_v', 'app-icon-', 'manifest-', 'HUONG-DAN-', 'AUDIO-', 'PART2-', 'speaking-practice-audio-manifest', 'squirrel-logo', 'alien-logo', 'install-speaking-audio')):
                           raise SystemExit('Unsafe removal: ' + name)
+                  audio_payload = {}
+                  audio_archives = []
+                  if manifest['version'] == 'v124-batch2':
+                      expected_audio = manifest['audio_files']
+                      required_audio = {f'audio/speaking-practice/practice-{n:04d}.mp3' for n in range(201, 401)}
+                      if set(expected_audio) != required_audio:
+                          raise SystemExit('Batch 2 must contain exactly answers 201-400')
+                      names = manifest['audio_archives']
+                      if names != ['IELTSquirrel_Batch2_Audio_1.zip', 'IELTSquirrel_Batch2_Audio_2.zip']:
+                          raise SystemExit('Unexpected audio archive names')
+                      for archive_name in names:
+                          audio_archive = Path(archive_name)
+                          if not audio_archive.is_file():
+                              raise SystemExit('Upload all three update ZIP files together. Missing: ' + archive_name)
+                          audio_archives.append(audio_archive)
+                          with zipfile.ZipFile(audio_archive) as audio_bundle:
+                              for name in audio_bundle.namelist():
+                                  if name not in required_audio or name in audio_payload:
+                                      raise SystemExit('Unexpected or duplicate audio: ' + name)
+                                  data = audio_bundle.read(name)
+                                  if hashlib.sha256(data).hexdigest() != expected_audio[name]:
+                                      raise SystemExit('Corrupt audio file: ' + name)
+                                  audio_payload[name] = data
+                      if set(audio_payload) != required_audio:
+                          raise SystemExit('Incomplete Batch 2 audio')
+                      for n in range(1, 201):
+                          if not Path(f'audio/speaking-practice/practice-{n:04d}.mp3').is_file():
+                              raise SystemExit('Install the existing Batch 1 audio before this update')
+                  for name, data in audio_payload.items():
+                      target = Path(name)
+                      target.parent.mkdir(parents=True, exist_ok=True)
+                      target.write_bytes(data)
                   for name, data in payload.items():
                       Path(name).write_bytes(data)
                   for name in removals:
                       path = Path(name)
                       if path.is_file():
                           path.unlink()
+                  for audio_archive in audio_archives:
+                      audio_archive.unlink()
                   archive.unlink()
                   print(f'Installed {len(payload)} site files; removed obsolete files.')
           PYTHON
@@ -73,7 +107,7 @@ jobs:
           if ! git diff --cached --quiet; then
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git commit -m "Refresh splash icon and clean obsolete files"
+            git commit -m "Update IELTSquirrel site and Speaking Practice audio"
             git push origin "HEAD:${{ github.event.repository.default_branch }}"
           fi
       - name: Stage website for Pages
