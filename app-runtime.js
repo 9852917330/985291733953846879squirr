@@ -386,6 +386,7 @@ window.SPEAKING_PRACTICE_UI = (() => {
       const bank = window.SPEAKING_PRACTICE_AUDIO || [];
       const item = pick(bank, 'audio');
       state.prompt = item ? item.question : '';
+      state.cues = item && item.cues ? item.cues : [];
       state.topicName = topicForPrompt(state.prompt);
       els.meta.textContent = `AUDIO · ${bank.length} QUESTIONS`;
     } else if (state.mode === 'ielts') {
