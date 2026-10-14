@@ -543,6 +543,10 @@ window.SPEAKING_PRACTICE_UI = (() => {
   }
 
   function sampleAnswer() {
+    if (state.mode === 'audio') {
+      const item = (window.SPEAKING_PRACTICE_AUDIO || []).find(entry => entry.question === state.prompt);
+      if (item) return item.answer;
+    }
     if (state.mode === 'thought') return thoughtAnswer(state.prompt);
     if (state.mode === 'ielts') return part() === 1 ? ieltsPart1Answer(state.prompt) : part() === 2 ? ieltsPart2Answer(state.prompt) : ieltsPart3Answer(state.prompt);
     return randomAnswer(state.prompt);
