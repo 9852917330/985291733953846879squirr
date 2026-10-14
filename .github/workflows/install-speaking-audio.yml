@@ -24,6 +24,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.repository.default_branch }}
+
       - name: Apply phone update when uploaded
         run: |
           python3 - <<'PYTHON'
@@ -36,7 +37,7 @@ jobs:
           else:
               with zipfile.ZipFile(archive) as bundle:
                   manifest = json.loads(bundle.read('site-update-manifest.json'))
-                  if manifest.get('version') not in {'v123-clean-splash', 'v124-batch2', 'v125-branded-splash'}:
+                  if manifest.get('version') not in {'v123-clean-splash', 'v124-batch2', 'v125-branded-splash', 'v126-batch3'}:
                       raise SystemExit('Incorrect phone update version')
                   expected = manifest['files']
                   present = set(bundle.namelist()) - {'site-update-manifest.json'}
@@ -60,13 +61,15 @@ jobs:
                           raise SystemExit('Unsafe removal: ' + name)
                   audio_payload = {}
                   audio_archives = []
-                  if manifest['version'] in {'v124-batch2', 'v125-branded-splash'}:
+                  if manifest['version'] in {'v124-batch2', 'v125-branded-splash', 'v126-batch3'}:
+                      batch = 3 if manifest['version'] == 'v126-batch3' else 2
+                      start = 401 if batch == 3 else 201
                       expected_audio = manifest['audio_files']
-                      required_audio = {f'audio/speaking-practice/practice-{n:04d}.mp3' for n in range(201, 401)}
+                      required_audio = {f'audio/speaking-practice/practice-{n:04d}.mp3' for n in range(start, start + 200)}
                       if set(expected_audio) != required_audio:
-                          raise SystemExit('Batch 2 must contain exactly answers 201-400')
+                          raise SystemExit(f'Batch {batch} must contain exactly answers {start}-{start + 199}')
                       names = manifest['audio_archives']
-                      if names != ['IELTSquirrel_Batch2_Audio_1.zip', 'IELTSquirrel_Batch2_Audio_2.zip']:
+                      if names != [f'IELTSquirrel_Batch{batch}_Audio_1.zip', f'IELTSquirrel_Batch{batch}_Audio_2.zip']:
                           raise SystemExit('Unexpected audio archive names')
                       for archive_name in names:
                           audio_archive = Path(archive_name)
@@ -82,10 +85,10 @@ jobs:
                                       raise SystemExit('Corrupt audio file: ' + name)
                                   audio_payload[name] = data
                       if set(audio_payload) != required_audio:
-                          raise SystemExit('Incomplete Batch 2 audio')
-                      for n in range(1, 201):
+                          raise SystemExit(f'Incomplete Batch {batch} audio')
+                      for n in range(1, start):
                           if not Path(f'audio/speaking-practice/practice-{n:04d}.mp3').is_file():
-                              raise SystemExit('Install the existing Batch 1 audio before this update')
+                              raise SystemExit(f'Install earlier batches before this update; missing answer {n}')
                   for name, data in audio_payload.items():
                       target = Path(name)
                       target.parent.mkdir(parents=True, exist_ok=True)
@@ -101,6 +104,7 @@ jobs:
                   archive.unlink()
                   print(f'Installed {len(payload)} site files; removed obsolete files.')
           PYTHON
+
       - name: Save update to the repository
         run: |
           git add -A
@@ -110,6 +114,7 @@ jobs:
             git commit -m "Update IELTSquirrel site and Speaking Practice audio"
             git push origin "HEAD:${{ github.event.repository.default_branch }}"
           fi
+
       - name: Stage website for Pages
         run: |
           python3 - <<'PYTHON'
@@ -133,10 +138,13 @@ jobs:
               shutil.copytree(root/directory, out/directory)
           print('Staged website with audio and learning visuals.')
           PYTHON
+
       - uses: actions/configure-pages@v5
+
       - uses: actions/upload-pages-artifact@v3
         with:
           path: ${{ runner.temp }}/ieltsquirrel-pages
+
       - name: Deploy website
         id: deployment
         uses: actions/deploy-pages@v4
