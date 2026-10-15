@@ -1,0 +1,44 @@
+/* Version headings are primary; phrase glossaries are supporting material. */
+#app .model-version > .model-answer-title,
+#app .model-version > h3.section-label,
+#app .model-version > .sp-model-answer-head {
+  display: block;
+  margin: 0 0 1rem;
+  padding: 0;
+  border: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: clamp(1.2rem, 1.15rem + .2vw, 1.35rem);
+  font-weight: 800;
+  line-height: 1.35;
+  letter-spacing: 0;
+  text-transform: none;
+  color: inherit;
+}
+
+#app .model-version + .model-version {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--line, rgba(128, 128, 128, .3));
+}
+
+#app .model-version > .phrase-meanings {
+  margin: 1.25rem 0 0;
+}
+
+#app .model-version > .phrase-meanings > .section-label,
+#app .model-version > .phrase-meanings > .key-phrase-meanings-title {
+  margin: 0 0 .6rem;
+  padding: 0;
+  border: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: .85rem;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: .015em;
+  text-transform: none;
+  color: var(--muted, inherit);
+}
+
+#app .sp-model-answer .model-version > p {
+  white-space: pre-line;
+}
