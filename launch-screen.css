@@ -1,0 +1,23 @@
+/* The browser owns the OS launch screen; this is the app's first painted view. */
+#appLaunchSplash { display: none; }
+.app-launching #appLaunchSplash {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483647;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: #d8ccb8;
+}
+#appLaunchSplash svg {
+  /* The old visible mark was approximately 72 CSS pixels wide. */
+  width: min(calc(72px * 5), calc(100vw - 24px), calc((100vh - 48px) * 1.17919));
+  height: auto;
+  aspect-ratio: 408 / 346;
+  display: block;
+}
+@supports (height: 100svh) {
+  #appLaunchSplash svg {
+    width: min(calc(72px * 5), calc(100vw - 24px), calc((100svh - 48px) * 1.17919));
+  }
+}

@@ -63,3 +63,8 @@
 #app .sp-model-answer .model-version > p {
   white-space: pre-line;
 }
+
+:is(#app, #detail) .qa-audio-note:empty,
+:is(#app, #detail) .core-audio-note:empty { display: none; }
+:is(#app, #detail) .core-audio > .core-audio-head { margin: .65rem 0 0; }
+:is(#app, #detail) .core-audio > audio { display: block; width: 100%; }
