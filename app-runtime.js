@@ -339,7 +339,7 @@ window.SPEAKING_PRACTICE_UI = (() => {
     <button class="sp-btn primary sp-answer-btn" type="button" id="spAnswerBtn">Show model answer</button>
   </div>
   <div class="sp-model-answer" id="spAnswer" hidden>
-    <div class="sp-model-answer-head"><span>MODEL ANSWER</span></div>
+    <div class="sp-model-answer-head"><span>Advanced Model Answer</span></div>
     <p id="spAnswerText"></p>
   </div>
 </section>
@@ -544,19 +544,46 @@ window.SPEAKING_PRACTICE_UI = (() => {
   }
 
   function sampleAnswer() {
-    if (state.mode === 'audio') {
-      const item = (window.SPEAKING_PRACTICE_AUDIO || []).find(entry => entry.question === state.prompt);
-      if (item) return item.answer;
-    }
+    const item = (window.SPEAKING_PRACTICE_AUDIO || []).find(entry => entry.question === state.prompt);
+    if (item) return item.answer;
     if (state.mode === 'thought') return thoughtAnswer(state.prompt);
     if (state.mode === 'ielts') return part() === 1 ? ieltsPart1Answer(state.prompt) : part() === 2 ? ieltsPart2Answer(state.prompt) : ieltsPart3Answer(state.prompt);
     return randomAnswer(state.prompt);
   }
 
+  function practiceTextHtml(text, phrases = []) {
+    const raw = String(text || '');
+    const matches = phrases.map(phrase => ({ text: phrase.en, index: raw.indexOf(phrase.en) }))
+      .filter(match => match.index >= 0 && match.text)
+      .sort((a, b) => a.index - b.index || b.text.length - a.text.length);
+    let cursor = 0, result = '';
+    matches.forEach(match => {
+      if (match.index < cursor) return;
+      result += esc(raw.slice(cursor, match.index)) + '<strong class="key-phrase">' + esc(match.text) + '</strong>';
+      cursor = match.index + match.text.length;
+    });
+    return result + esc(raw.slice(cursor));
+  }
+
+  function practiceMeaningsHtml(phrases = []) {
+    if (!phrases.length) return '';
+    return '<section class="phrase-meanings" aria-label="Key phrase meanings"><h3 class="section-label">Key phrase meanings</h3><dl class="phrases">' + phrases.map(phrase => '<div class="phrase"><dt>' + esc(phrase.en) + '</dt><dd>' + esc(phrase.meaning) + '</dd></div>').join('') + '</dl></section>';
+  }
+
+  function practiceAnswerHtml(item, fallbackAnswer = '') {
+    const simple = item && item.simpleAnswer;
+    const simpleHtml = simple ? '<section class="model-version simple-model"><div class="sp-model-answer-head"><span>Simple Model Answer</span></div><p id="spSimpleAnswerText">' + practiceTextHtml(simple.text, simple.phrases) + '</p>' + practiceMeaningsHtml(simple.phrases) + '</section>' : '';
+    const advanced = item ? item.answer : fallbackAnswer;
+    const advancedPhrases = item && item.answerPhrases || [];
+    return simpleHtml + '<section class="model-version advanced-model"><div class="sp-model-answer-head"><span>Advanced Model Answer</span></div><p id="spAnswerText">' + practiceTextHtml(advanced, advancedPhrases) + '</p>' + practiceMeaningsHtml(advancedPhrases) + '</section>';
+  }
+
   function toggleAnswer() {
     const opening = els.answer.hidden;
     if (opening) {
-      els.answerText.textContent = sampleAnswer();
+      const item = (window.SPEAKING_PRACTICE_AUDIO || []).find(entry => entry.question === state.prompt);
+      els.answer.innerHTML = practiceAnswerHtml(item, item ? item.answer : sampleAnswer());
+      els.answerText = q('#spAnswerText');
       els.answer.hidden = false;
       els.answerBtn.textContent = 'Hide model answer';
       els.answerBtn.setAttribute('aria-expanded', 'true');
