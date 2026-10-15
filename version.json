@@ -1,10 +1,13 @@
 {
-  "version": "2026.10.15-v130-simple-part3",
+  "version": "2026.10.15-v131-simple-part2",
   "phrase_meanings": 4188,
   "band_estimates": false,
   "speaking_practice_audio": 1000,
   "speaking_part1_simple_answers": 350,
   "speaking_part1_simple_lessons": 90,
   "speaking_part3_simple_answers": 254,
-  "speaking_part3_simple_lessons": 96
+  "speaking_part3_simple_lessons": 96,
+  "speaking_part2_simple_answers": 222,
+  "speaking_part2_simple_core_stories": 20,
+  "speaking_part2_simple_cue_cards": 202
 }
