@@ -24,11 +24,12 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.repository.default_branch }}
+
       - name: Apply phone update when uploaded
         run: |
           python3 - <<'PYTHON'
           from pathlib import Path, PurePosixPath
-          import hashlib, json, zipfile
+          import hashlib, json, re, zipfile
 
           archive = Path('IELTSquirrel_Phone_Update.zip')
           if not archive.exists():
@@ -36,7 +37,7 @@ jobs:
           else:
               with zipfile.ZipFile(archive) as bundle:
                   manifest = json.loads(bundle.read('site-update-manifest.json'))
-                  if manifest.get('version') not in {'v123-clean-splash', 'v124-batch2', 'v125-branded-splash', 'v126-batch3', 'v127-batch4', 'v128-batch5', 'v129-simple-part1', 'v130-simple-part3', 'v131-simple-part2', 'v132-simple-practice-batch1', 'v133-simple-practice-complete'}:
+                  if manifest.get('version') not in {'v123-clean-splash', 'v124-batch2', 'v125-branded-splash', 'v126-batch3', 'v127-batch4', 'v128-batch5', 'v129-simple-part1', 'v130-simple-part3', 'v131-simple-part2', 'v132-simple-practice-batch1', 'v133-simple-practice-complete', 'v134-speaking-part1-audio'}:
                       raise SystemExit('Incorrect phone update version')
                   expected = manifest['files']
                   present = set(bundle.namelist()) - {'site-update-manifest.json'}
@@ -88,6 +89,42 @@ jobs:
                       for n in range(1, start):
                           if not Path(f'audio/speaking-practice/practice-{n:04d}.mp3').is_file():
                               raise SystemExit(f'Install earlier batches before this update; missing answer {n}')
+                  if manifest['version'] == 'v134-speaking-part1-audio':
+                      runtime = payload['app-runtime.js'].decode('utf-8')
+                      items = json.loads(re.search(r'window.IELTS_DATA=(.*);', runtime)[1])['items']
+                      lessons = [x for x in items if x['section'] == 'speaking-part-1']
+                      required_audio = set()
+                      for lesson in lessons:
+                          if not re.fullmatch(r'speaking-part-1-\d{3}', lesson['id']):
+                              raise SystemExit('Invalid Part 1 lesson ID')
+                          paths = [f"audio/simple/speaking-part-1/{lesson['id']}-q{n+1:02d}.mp3" for n in range(len(lesson['simpleAnswers']))]
+                          if lesson.get('simpleQaAudio') != paths:
+                              raise SystemExit('Incorrect Simple audio mapping')
+                          required_audio.update(paths)
+                          for existing in lesson['qaAudio']:
+                              if not Path(existing).is_file() or Path(existing).stat().st_size == 0:
+                                  raise SystemExit('Existing Advanced audio is missing: ' + existing)
+                      expected_audio = manifest['audio_files']
+                      if len(lessons) != 90 or len(required_audio) != 350 or set(expected_audio) != required_audio:
+                          raise SystemExit('Part 1 update must include exactly 350 Simple answers across 90 lessons')
+                      names = manifest['audio_archives']
+                      if names != ['IELTSquirrel_Part1_Simple_Audio_1.zip', 'IELTSquirrel_Part1_Simple_Audio_2.zip']:
+                          raise SystemExit('Unexpected Part 1 audio archive names')
+                      for archive_name in names:
+                          audio_archive = Path(archive_name)
+                          if not audio_archive.is_file():
+                              raise SystemExit('Upload all three update ZIP files together. Missing: ' + archive_name)
+                          audio_archives.append(audio_archive)
+                          with zipfile.ZipFile(audio_archive) as audio_bundle:
+                              for name in audio_bundle.namelist():
+                                  if name not in required_audio or name in audio_payload:
+                                      raise SystemExit('Unexpected or duplicate audio: ' + name)
+                                  data = audio_bundle.read(name)
+                                  if hashlib.sha256(data).hexdigest() != expected_audio[name]:
+                                      raise SystemExit('Corrupt audio file: ' + name)
+                                  audio_payload[name] = data
+                      if set(audio_payload) != required_audio:
+                          raise SystemExit('Incomplete Part 1 Simple audio')
                   for name, data in audio_payload.items():
                       target = Path(name)
                       target.parent.mkdir(parents=True, exist_ok=True)
@@ -103,15 +140,17 @@ jobs:
                   archive.unlink()
                   print(f'Installed {len(payload)} site files; removed obsolete files.')
           PYTHON
+
       - name: Save update to the repository
         run: |
           git add -A
           if ! git diff --cached --quiet; then
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git commit -m "Update IELTSquirrel site and Speaking Practice audio"
+            git commit -m "Update IELTSquirrel site and Speaking audio"
             git push origin "HEAD:${{ github.event.repository.default_branch }}"
           fi
+
       - name: Stage website for Pages
         run: |
           python3 - <<'PYTHON'
@@ -135,10 +174,13 @@ jobs:
               shutil.copytree(root/directory, out/directory)
           print('Staged website with audio and learning visuals.')
           PYTHON
+
       - uses: actions/configure-pages@v5
+
       - uses: actions/upload-pages-artifact@v3
         with:
           path: ${{ runner.temp }}/ieltsquirrel-pages
+
       - name: Deploy website
         id: deployment
         uses: actions/deploy-pages@v4
