@@ -1,32 +1,53 @@
-/* Version headings are primary; phrase glossaries are supporting material. */
-#app .model-version > .model-answer-title,
-#app .model-version > h3.section-label,
-#app .model-version > .sp-model-answer-head {
+/* Question > answer version > phrase glossary, including the lesson dialog. */
+:is(#app, #detail) .qa-item > .question-title,
+:is(#app, #detail) .qa-item > .q,
+#app .sp-question,
+:is(#app, #detail) .speaking-prompt-question {
+  display: block;
+  margin: 2rem 0 1.5rem;
+  padding: 0;
+  border: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: clamp(1.55rem, 1.25rem + 1vw, 2rem);
+  font-weight: 800;
+  line-height: 1.3;
+  letter-spacing: -.02em;
+  text-transform: none;
+  color: var(--ink, inherit);
+  overflow-wrap: break-word;
+}
+
+#app .sp-question { margin-top: .75rem; }
+:is(#app, #detail) .speaking-prompt-question { margin-top: 0; }
+
+:is(#app, #detail) .model-version > .model-answer-title,
+:is(#app, #detail) .model-version > h3.section-label,
+:is(#app, #detail) .model-version > .sp-model-answer-head {
   display: block;
   margin: 0 0 1rem;
   padding: 0;
   border: 0;
   font-family: Arial, Helvetica, sans-serif;
-  font-size: clamp(1.2rem, 1.15rem + .2vw, 1.35rem);
-  font-weight: 800;
+  font-size: clamp(1.05rem, 1rem + .2vw, 1.2rem);
+  font-weight: 700;
   line-height: 1.35;
   letter-spacing: 0;
   text-transform: none;
   color: inherit;
 }
 
-#app .model-version + .model-version {
+:is(#app, #detail) .model-version + .model-version {
   margin-top: 2rem;
   padding-top: 1.5rem;
   border-top: 1px solid var(--line, rgba(128, 128, 128, .3));
 }
 
-#app .model-version > .phrase-meanings {
+:is(#app, #detail) .model-version > .phrase-meanings {
   margin: 1.25rem 0 0;
 }
 
-#app .model-version > .phrase-meanings > .section-label,
-#app .model-version > .phrase-meanings > .key-phrase-meanings-title {
+:is(#app, #detail) .model-version > .phrase-meanings > .section-label,
+:is(#app, #detail) .model-version > .phrase-meanings > .key-phrase-meanings-title {
   margin: 0 0 .6rem;
   padding: 0;
   border: 0;

@@ -1,5 +1,5 @@
 {
-  "version": "2026.10.15-v133-simple-practice-complete",
+  "version": "2026.10.15-v134-speaking-part1-audio",
   "phrase_meanings": 4195,
   "band_estimates": false,
   "speaking_practice_audio": 1000,
@@ -17,5 +17,8 @@
     1000
   ],
   "speaking_practice_advanced_phrase_entries": 3200,
-  "advanced_phrase_coverage_complete": true
+  "advanced_phrase_coverage_complete": true,
+  "speaking_part1_simple_audio": 350,
+  "speaking_part1_advanced_audio": 350,
+  "question_heading_hierarchy": true
 }
