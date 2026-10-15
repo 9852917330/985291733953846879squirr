@@ -1,5 +1,5 @@
 {
-  "version": "2026.10.15-v136-part2-simple-audio-batch1",
+  "version": "2026.10.16-v137-part2-simple-audio-batch2",
   "phrase_meanings": 4195,
   "band_estimates": false,
   "speaking_practice_audio": 1000,
@@ -23,8 +23,8 @@
   "question_heading_hierarchy": true,
   "speaking_part3_simple_audio": 254,
   "speaking_part3_advanced_audio": 254,
-  "speaking_part2_simple_audio": 56,
-  "speaking_part2_simple_audio_batch": 1,
+  "speaking_part2_simple_audio": 112,
+  "speaking_part2_simple_audio_batch": 2,
   "audio_answer_labels": false,
-  "installed_app_launch_logo_scale": 5
+  "custom_launch_splash": false
 }
