@@ -37,7 +37,7 @@ jobs:
           else:
               with zipfile.ZipFile(archive) as bundle:
                   manifest = json.loads(bundle.read('site-update-manifest.json'))
-                  if manifest.get('version') not in {'v123-clean-splash', 'v124-batch2', 'v125-branded-splash', 'v126-batch3', 'v127-batch4', 'v128-batch5'}:
+                  if manifest.get('version') not in {'v123-clean-splash', 'v124-batch2', 'v125-branded-splash', 'v126-batch3', 'v127-batch4', 'v128-batch5', 'v129-simple-part1'}:
                       raise SystemExit('Incorrect phone update version')
                   expected = manifest['files']
                   present = set(bundle.namelist()) - {'site-update-manifest.json'}
