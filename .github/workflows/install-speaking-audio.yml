@@ -34,8 +34,8 @@ jobs:
           if archive.exists():
               with zipfile.ZipFile(archive) as bundle:
                   manifest = json.loads(bundle.read('site-update-manifest.json'))
-                  if manifest.get('version') != 'v138-part2-simple-audio-batch3':
-                      raise SystemExit('Upload the v138 Part 2 Batch 3 phone update.')
+                  if manifest.get('version') != 'v139-part2-simple-audio-batch4':
+                      raise SystemExit('Upload the v139 Part 2 Batch 4 phone update.')
                   expected = manifest['files']
                   if len(bundle.namelist()) != len(set(bundle.namelist())) or set(bundle.namelist()) != set(expected) | {'site-update-manifest.json'}:
                       raise SystemExit('Incorrect update archive contents')
@@ -52,11 +52,11 @@ jobs:
                   raise SystemExit('This update must not remove website files')
               items = json.loads(re.search(r'window.IELTS_DATA=(.*);', payload['app-runtime.js'].decode())[1])['items']
               lessons = [x for x in items if x['section'] == 'speaking-part-2']
-              ids = [f'speaking-part-2-{n:03d}' for n in range(94, 149)]
-              prior_ids = [f'speaking-part-2-core-{n:02d}' for n in range(1, 21)] + [f'speaking-part-2-{n:03d}' for n in range(1, 94) if n != 31]
+              ids = [f'speaking-part-2-{n:03d}' for n in range(149, 205) if n != 202]
+              prior_ids = [f'speaking-part-2-core-{n:02d}' for n in range(1, 21)] + [f'speaking-part-2-{n:03d}' for n in range(1, 149) if n != 31]
               required = {f'audio/simple/speaking-part-2/{key}.mp3' for key in ids}
-              if len(lessons) != 222 or manifest.get('part2_batch') != 3 or manifest.get('part2_batch_ids') != ids or set(manifest['audio_files']) != required:
-                  raise SystemExit('Incorrect Part 2 Batch 3 coverage')
+              if len(lessons) != 222 or manifest.get('part2_batch') != 4 or manifest.get('part2_batch_ids') != ids or set(manifest['audio_files']) != required:
+                  raise SystemExit('Incorrect Part 2 Batch 4 coverage')
               for lesson in lessons:
                   wanted = f"audio/simple/speaking-part-2/{lesson['id']}.mp3" if lesson['id'] in ids + prior_ids else None
                   if lesson.get('simpleAudio') != wanted:
@@ -71,7 +71,7 @@ jobs:
               for name in previous:
                   if not Path(name).is_file() or Path(name).stat().st_size == 0:
                       raise SystemExit('Install earlier audio updates first. Missing: ' + name)
-              names = ['IELTSquirrel_Part2_Simple_Batch3_Audio_1.zip', 'IELTSquirrel_Part2_Simple_Batch3_Audio_2.zip']
+              names = ['IELTSquirrel_Part2_Simple_Batch4_Audio_1.zip', 'IELTSquirrel_Part2_Simple_Batch4_Audio_2.zip']
               if manifest['audio_archives'] != names:
                   raise SystemExit('Incorrect audio archive names')
               audio_payload = {}
@@ -87,14 +87,14 @@ jobs:
                               raise SystemExit('Corrupt audio: ' + name)
                           audio_payload[name] = data
               if set(audio_payload) != required:
-                  raise SystemExit('Incomplete Batch 3 audio')
+                  raise SystemExit('Incomplete Batch 4 audio')
               for name, data in {**payload, **audio_payload}.items():
                   target = Path(name)
                   target.parent.mkdir(parents=True, exist_ok=True)
                   target.write_bytes(data)
               for filename in names + [archive.name]:
                   Path(filename).unlink()
-              print('Installed Part 2 Batch 3: 55 Simple audio files.')
+              print('Installed Part 2 Batch 4: 55 Simple audio files.')
           PYTHON
       - name: Save update
         run: |
@@ -102,7 +102,7 @@ jobs:
           if ! git diff --cached --quiet; then
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git commit -m "Update IELTSquirrel Part 2 audio batch 3"
+            git commit -m "Update IELTSquirrel Part 2 audio batch 4"
             git push origin "HEAD:${{ github.event.repository.default_branch }}"
           fi
       - name: Stage website
