@@ -1,5 +1,5 @@
 {
-  "version": "2026.10.16-v138-part2-simple-audio-batch3",
+  "version": "2026.10.16-v139-part2-simple-audio-batch4",
   "phrase_meanings": 4195,
   "band_estimates": false,
   "speaking_practice_audio": 1000,
@@ -23,8 +23,8 @@
   "question_heading_hierarchy": true,
   "speaking_part3_simple_audio": 254,
   "speaking_part3_advanced_audio": 254,
-  "speaking_part2_simple_audio": 167,
-  "speaking_part2_simple_audio_batch": 3,
+  "speaking_part2_simple_audio": 222,
+  "speaking_part2_simple_audio_batch": 4,
   "audio_answer_labels": false,
   "custom_launch_splash": false
 }
