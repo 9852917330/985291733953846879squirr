@@ -22,110 +22,72 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.repository.default_branch }}
       - name: Apply phone update
         run: |
-          python3 - <<'PYTHON'
-          from pathlib import Path, PurePosixPath
-          import hashlib, json, re, zipfile
-
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib, json, zipfile
           archive = Path('IELTSquirrel_Phone_Update.zip')
           if archive.exists():
-              with zipfile.ZipFile(archive) as bundle:
-                  manifest = json.loads(bundle.read('site-update-manifest.json'))
-                  if manifest.get('version') != 'v139-part2-simple-audio-batch4':
-                      raise SystemExit('Upload the v139 Part 2 Batch 4 phone update.')
-                  expected = manifest['files']
-                  if len(bundle.namelist()) != len(set(bundle.namelist())) or set(bundle.namelist()) != set(expected) | {'site-update-manifest.json'}:
-                      raise SystemExit('Incorrect update archive contents')
-                  payload = {}
-                  for name, digest in expected.items():
-                      path = PurePosixPath(name)
-                      if len(path.parts) != 1 or name.startswith('.') or path.suffix not in {'.html', '.png', '.webmanifest', '.js', '.json', '.css'}:
-                          raise SystemExit('Unsafe update path: ' + name)
-                      data = bundle.read(name)
-                      if hashlib.sha256(data).hexdigest() != digest:
-                          raise SystemExit('Corrupt site file: ' + name)
-                      payload[name] = data
-              if manifest.get('remove') != []:
-                  raise SystemExit('This update must not remove website files')
-              items = json.loads(re.search(r'window.IELTS_DATA=(.*);', payload['app-runtime.js'].decode())[1])['items']
-              lessons = [x for x in items if x['section'] == 'speaking-part-2']
-              ids = [f'speaking-part-2-{n:03d}' for n in range(149, 205) if n != 202]
-              prior_ids = [f'speaking-part-2-core-{n:02d}' for n in range(1, 21)] + [f'speaking-part-2-{n:03d}' for n in range(1, 149) if n != 31]
-              required = {f'audio/simple/speaking-part-2/{key}.mp3' for key in ids}
-              if len(lessons) != 222 or manifest.get('part2_batch') != 4 or manifest.get('part2_batch_ids') != ids or set(manifest['audio_files']) != required:
-                  raise SystemExit('Incorrect Part 2 Batch 4 coverage')
-              for lesson in lessons:
-                  wanted = f"audio/simple/speaking-part-2/{lesson['id']}.mp3" if lesson['id'] in ids + prior_ids else None
-                  if lesson.get('simpleAudio') != wanted:
-                      raise SystemExit('Incorrect Simple audio mapping: ' + lesson['id'])
-              previous = [x['audio'] for x in lessons]
-              previous += [f'audio/simple/speaking-part-2/{key}.mp3' for key in prior_ids]
-              for part, count in [(1, 350), (3, 254)]:
-                  paths = [p for x in items if x['section'] == f'speaking-part-{part}' for p in x.get('simpleQaAudio', [])]
-                  if len(paths) != count:
-                      raise SystemExit(f'Incorrect Part {part} audio coverage')
-                  previous += paths
-              for name in previous:
-                  if not Path(name).is_file() or Path(name).stat().st_size == 0:
-                      raise SystemExit('Install earlier audio updates first. Missing: ' + name)
-              names = ['IELTSquirrel_Part2_Simple_Batch4_Audio_1.zip', 'IELTSquirrel_Part2_Simple_Batch4_Audio_2.zip']
-              if manifest['audio_archives'] != names:
-                  raise SystemExit('Incorrect audio archive names')
-              audio_payload = {}
-              for filename in names:
-                  if not Path(filename).is_file():
-                      raise SystemExit('Upload all three ZIP files. Missing: ' + filename)
-                  with zipfile.ZipFile(filename) as bundle:
-                      for name in bundle.namelist():
-                          if name not in required or name in audio_payload:
-                              raise SystemExit('Unexpected or duplicate audio: ' + name)
-                          data = bundle.read(name)
-                          if hashlib.sha256(data).hexdigest() != manifest['audio_files'][name]:
-                              raise SystemExit('Corrupt audio: ' + name)
-                          audio_payload[name] = data
-              if set(audio_payload) != required:
-                  raise SystemExit('Incomplete Batch 4 audio')
-              for name, data in {**payload, **audio_payload}.items():
+              names = ['IELTSquirrel_Practice_Simple_Batch1_Audio_1.zip', 'IELTSquirrel_Practice_Simple_Batch1_Audio_2.zip']
+              with zipfile.ZipFile(archive) as z:
+                  manifest = json.loads(z.read('site-update-manifest.json'))
+              site = {'speaking-practice-audio.js', 'speaking-practice-audio-data.js', 'pwa.js', 'sw.js', 'version.json'}
+              audio = {f'audio/simple/speaking-practice/practice-{n:04d}.mp3' for n in range(1, 251)}
+              assert manifest['version'] == 'v140-practice-simple-audio-batch1', 'Incorrect update version'
+              assert set(manifest['files']) == site and set(manifest['audio_files']) == audio, 'Incorrect update coverage'
+              assert manifest['audio_archives'] == names, 'Incorrect audio archives'
+              expected = {**manifest['files'], **manifest['audio_files']}
+              payload = {}
+              for filename in [archive.name] + names:
+                  assert Path(filename).is_file(), 'Upload all three ZIP files. Missing: ' + filename
+                  with zipfile.ZipFile(filename) as z:
+                      assert len(z.namelist()) == len(set(z.namelist())), 'Duplicate ZIP entries'
+                      for name in z.namelist():
+                          if filename == archive.name and name == 'site-update-manifest.json':
+                              continue
+                          assert name in expected and name not in payload, 'Unexpected file: ' + name
+                          data = z.read(name)
+                          assert hashlib.sha256(data).hexdigest() == expected[name], 'Corrupt file: ' + name
+                          payload[name] = data
+              assert set(payload) == set(expected), 'Incomplete update'
+              for name in site:
+                  target = Path(name)
+                  assert target.is_file(), 'Missing original file: ' + name
+                  current = hashlib.sha256(target.read_bytes()).hexdigest()
+                  assert current in {manifest['base_files'][name], expected[name]}, 'Website changed since this update was prepared: ' + name
+              for name, data in payload.items():
                   target = Path(name)
                   target.parent.mkdir(parents=True, exist_ok=True)
                   target.write_bytes(data)
-              for filename in names + [archive.name]:
+              for filename in [archive.name] + names:
                   Path(filename).unlink()
-              print('Installed Part 2 Batch 4: 55 Simple audio files.')
-          PYTHON
+              print('Installed 250 Speaking Practice Simple audio files and larger launch logo.')
+          PY
       - name: Save update
         run: |
           git add -A
           if ! git diff --cached --quiet; then
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git commit -m "Update IELTSquirrel Part 2 audio batch 4"
+            git commit -m "Add Speaking Practice Simple audio batch 1"
             git push origin "HEAD:${{ github.event.repository.default_branch }}"
           fi
       - name: Stage website
         run: |
-          python3 - <<'PYTHON'
+          python3 - <<'PY'
           from pathlib import Path
-          import json, os, shutil
+          import os, shutil
           root = Path.cwd()
-          manifest = json.loads((root/'manifest.webmanifest').read_text())
-          essential = ['index.html', 'app.css', 'app-runtime.js', 'router.js', 'pwa.js', 'sw.js', 'CNAME', '.nojekyll']
-          essential += [item['src'] for item in manifest['icons']]
-          for name in essential:
-              if not (root/name).is_file():
-                  raise SystemExit('Missing website file: ' + name)
-          out = Path(os.environ['RUNNER_TEMP'])/'ieltsquirrel-pages'
+          out = Path(os.environ['RUNNER_TEMP']) / 'ieltsquirrel-pages'
           out.mkdir()
           allowed = {'.html', '.js', '.css', '.json', '.webmanifest', '.png', '.svg', '.txt', '.xml'}
           for path in root.iterdir():
               if path.is_file() and (path.suffix in allowed or path.name in {'CNAME', '.nojekyll'}):
-                  shutil.copy2(path, out/path.name)
+                  shutil.copy2(path, out / path.name)
           for directory in ['audio', 'visuals']:
-              shutil.copytree(root/directory, out/directory)
-          PYTHON
+              shutil.copytree(root / directory, out / directory)
+          PY
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
