@@ -1,6 +1,31 @@
 (() => {
   let pending = null;
   const standalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  if (standalone()) {
+    const splash = document.createElement('div');
+    splash.id = 'launch-splash';
+    splash.setAttribute('aria-hidden', 'true');
+    splash.style.cssText = 'position:fixed;inset:0;z-index:2147483647;display:grid;place-items:center;background:var(--bg,#d8ccb8);';
+    const logo = document.createElement('img');
+    logo.src = new URL('app-icon-512-v125.png', document.baseURI).href;
+    logo.alt = '';
+    logo.width = 288;
+    logo.height = 288;
+    logo.style.cssText = 'display:block;width:288px;height:288px;max-width:85vw;max-height:85vw;object-fit:contain;';
+    splash.append(logo);
+    document.body.append(splash);
+    const started = performance.now();
+    let dismissed = false;
+    const dismiss = () => {
+      if (dismissed) return;
+      dismissed = true;
+      setTimeout(() => splash.remove(), Math.max(0, 650 - (performance.now() - started)));
+    };
+    if (document.readyState === 'complete') dismiss();
+    else addEventListener('load', dismiss, {once:true});
+    addEventListener('pageshow', event => { if (event.persisted) splash.remove(); });
+    setTimeout(dismiss, 5000);
+  }
   const bound = new WeakSet();
   let installed = false;
   function syncButton() {
