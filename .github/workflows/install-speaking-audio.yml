@@ -1,4 +1,4 @@
-name: Publish IELTSquirrel
+name: Publish site
 
 on:
   push:
@@ -17,47 +17,56 @@ jobs:
   publish:
     if: github.ref_name == github.event.repository.default_branch
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+    environment: github-pages
     steps:
       - uses: actions/checkout@v4
-      - name: Apply phone update
+      - name: Apply update
         run: |
           python3 - <<'PY'
-          from pathlib import Path, PurePosixPath
-          import hashlib, json, zipfile
+          from pathlib import Path,PurePosixPath
+          import hashlib,json,re,zipfile
 
-          archive = Path('IELTSquirrel_Phone_Update_v144.zip')
+          archive=Path('site-update.zip')
           if archive.exists():
               with zipfile.ZipFile(archive) as z:
-                  names = z.namelist()
-                  assert len(names) == len(set(names)), 'Duplicate ZIP entries'
-                  m = json.loads(z.read('site-update-manifest.json'))
-                  assert m['version'] == 'v144-full-review', 'Wrong update version'
-                  expected, base = m['files'], m['base_files']
-                  assert set(base) == set(expected), 'Invalid base manifest'
-                  assert set(names) == set(expected) | {'site-update-manifest.json'}, 'Incomplete or unexpected files'
-                  assert sum(i.file_size for i in z.infolist()) < 100 * 1024 * 1024, 'Update is too large'
-                  payload = {}
-                  for name, digest in expected.items():
-                      p = PurePosixPath(name)
-                      assert not p.is_absolute() and all(v not in {'.', '..'} and not v.startswith('.') for v in p.parts), 'Unsafe path'
-                      assert str(p) == name and '\\' not in name, 'Unsafe path'
-                      assert (len(p.parts) == 1 and p.suffix in {'.html', '.js', '.css', '.json', '.xml'}) or (p.parts[0] == 'audio' and p.suffix == '.mp3'), 'Unexpected file type'
-                      assert z.getinfo(name).external_attr >> 16 & 0o170000 != 0o120000, 'Symlink is not allowed'
-                      data = z.read(name)
-                      assert hashlib.sha256(data).hexdigest() == digest, 'Corrupt file: ' + name
-                      target = Path(name)
-                      current = hashlib.sha256(target.read_bytes()).hexdigest() if target.is_file() else None
-                      assert current in {base[name], digest}, 'Website changed since this update was prepared: ' + name
-                      payload[name] = data
-              for name, data in payload.items():
-                  target = Path(name)
-                  target.parent.mkdir(parents=True, exist_ok=True)
+                  names=z.namelist()
+                  assert sum(i.file_size for i in z.infolist())<100*1024*1024, 'Update is too large'
+                  m=json.loads(z.read('site-update-manifest.json'))
+                  assert m['format']==1, 'Unsupported update format'
+                  files,remove,base=m['files'],m.get('delete',{}),m['base_files']
+                  assert len(names)==len(set(names)), 'Duplicate ZIP entries'
+                  assert not(set(files)&set(remove)), 'Conflicting update paths'
+                  assert set(base)==set(files)|set(remove), 'Invalid base manifest'
+                  assert set(names)==set(files)|{'site-update-manifest.json'}, 'Incomplete update'
+                  payload={}
+                  for name in base:
+                      p=PurePosixPath(name)
+                      assert p.parts and str(p)==name and not p.is_absolute() and '\\' not in name, 'Unsafe path'
+                      assert all(v not in {'.','..'} and not v.startswith('.') for v in p.parts), 'Unsafe path'
+                      assert (len(p.parts)==1 and (name=='CNAME' or p.suffix in {'.html','.js','.css','.json','.xml','.txt','.webmanifest','.png','.svg','.ico'})) or (p.parts[0] in {'audio','visuals'} and p.suffix in {'.mp3','.png','.jpg','.jpeg','.webp','.svg'}), 'Unexpected file type'
+                      expected=files.get(name)
+                      assert base[name] is None or re.fullmatch('[0-9a-f]{64}',base[name]), 'Invalid base hash'
+                      if name in files:
+                          assert re.fullmatch('[0-9a-f]{64}',expected), 'Invalid file hash'
+                          assert z.getinfo(name).external_attr>>16&0o170000!=0o120000, 'Symlink is not allowed'
+                          data=z.read(name)
+                          assert hashlib.sha256(data).hexdigest()==expected, 'Corrupt file: '+name
+                          payload[name]=data
+                      else:
+                          assert remove[name]==base[name] and base[name] is not None, 'Invalid removal'
+                      target=Path(name)
+                      assert not any(Path(*p.parts[:i]).is_symlink() for i in range(1,len(p.parts)+1)), 'Symlink target is not allowed'
+                      assert not target.exists() or target.is_file(), 'Target must be a file'
+                      current=hashlib.sha256(target.read_bytes()).hexdigest() if target.is_file() else None
+                      assert current in {base[name],expected}, 'Website changed since this update was prepared: '+name
+              for name,data in payload.items():
+                  target=Path(name)
+                  target.parent.mkdir(parents=True,exist_ok=True)
                   target.write_bytes(data)
+              for name in remove:
+                  Path(name).unlink(missing_ok=True)
               archive.unlink()
-              print('Installed v144: content review, audio, accessibility and SEO.')
+              print('Installed site update.')
           PY
       - name: Save update
         run: |
@@ -65,28 +74,72 @@ jobs:
           if ! git diff --cached --quiet; then
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git commit -m "Review IELTSquirrel content, audio and SEO"
+            git commit -m "Update site"
             git push origin "HEAD:${{ github.event.repository.default_branch }}"
           fi
-      - name: Stage website
+      - name: Stage public files
         run: |
           python3 - <<'PY'
-          from pathlib import Path
-          import os, shutil
-          root = Path.cwd()
-          out = Path(os.environ['RUNNER_TEMP']) / 'ieltsquirrel-pages'
+          from pathlib import Path,PurePosixPath
+          from html.parser import HTMLParser
+          from urllib.parse import urlsplit,unquote
+          import json,os,re,shutil
+
+          root=Path.cwd()
+          out=Path(os.environ['RUNNER_TEMP'])/'site-pages'
           out.mkdir()
-          allowed = {'.html', '.js', '.css', '.json', '.webmanifest', '.png', '.svg', '.txt', '.xml'}
-          for path in root.iterdir():
-              if path.is_file() and (path.suffix in allowed or path.name in {'CNAME', '.nojekyll'}):
-                  shutil.copy2(path, out / path.name)
-          for directory in ['audio', 'visuals']:
-              shutil.copytree(root / directory, out / directory)
+          routes=json.loads((root/'seo-routes.js').read_text().split('=',1)[1].rstrip(';\n'))
+          origin=urlsplit(routes['#home']['canonical']).netloc
+          pages={r['file'] for r in routes.values()}|{'404.html','writing-task-1.html'}
+          assets=set(pages)|{'sw.js','version.json','robots.txt','sitemap.xml','.nojekyll'}
+          def include(value):
+              u=urlsplit(value)
+              if u.scheme and u.scheme not in {'http','https'}:return
+              if u.netloc and u.netloc!=origin:return
+              name=unquote(u.path).removeprefix('./').lstrip('/') or 'index.html'
+              if '/' not in name:assets.add(name)
+          class References(HTMLParser):
+              def handle_starttag(self,tag,attrs):
+                  attrs=dict(attrs)
+                  if tag in {'script','img','source','audio','video'} and attrs.get('src'):include(attrs['src'])
+                  if tag=='link' and attrs.get('href') and attrs.get('rel')!='canonical':include(attrs['href'])
+          parser=References()
+          for name in sorted(pages):parser.feed((root/name).read_text())
+          manifest=json.loads((root/'manifest.webmanifest').read_text())
+          for icon in manifest['icons']:include(icon['src'])
+          shell=re.search(r'const SHELL=(\[[\s\S]*?\]);',(root/'sw.js').read_text())
+          assert shell, 'Missing offline asset list'
+          for value in json.loads(shell.group(1)):include(value)
+          allowed={'.html','.js','.css','.json','.webmanifest','.png','.jpg','.jpeg','.webp','.svg','.ico','.txt','.xml'}
+          for name in sorted(assets):
+              p=PurePosixPath(name)
+              assert len(p.parts)==1 and (p.suffix in allowed or name=='.nojekyll'), 'Unexpected public file'
+              source=root/name
+              assert source.is_file() and not source.is_symlink(), 'Missing public asset: '+name
+              shutil.copy2(source,out/name)
+          for directory,extensions in [('audio',{'.mp3'}),('visuals',{'.png','.jpg','.jpeg','.webp','.svg','.gif'})]:
+              source=root/directory
+              assert source.is_dir(), 'Missing asset directory: '+directory
+              for file in source.rglob('*'):
+                  if file.is_file() and not file.is_symlink() and file.suffix.lower() in extensions:
+                      target=out/directory/file.relative_to(source)
+                      target.parent.mkdir(parents=True,exist_ok=True)
+                      shutil.copy2(file,target)
+          repo=os.environ['GITHUB_REPOSITORY'].lower()
+          owner=repo.split('/')[0]
+          tokens=['github.com/'+owner+'/','raw.githubusercontent.com/'+owner+'/','api.github.com/repos/'+owner+'/',owner+'.github.io','git@github.com:'+owner+'/']
+          for file in out.rglob('*'):
+              if file.is_file() and file.suffix in {'.html','.js','.css','.json','.xml','.txt','.svg','.webmanifest'}:
+                  text=file.read_text(errors='replace').lower()
+                  assert not any(t in text for t in tokens), 'Repository reference in public asset: '+str(file.relative_to(out))
+                  if file.suffix in {'.js','.css'}:
+                      assert not re.search(r'(?m)(?://|/\*)[#@]\s*source(?:mapping)?url\s*=',text), 'Debug map in public asset'
+          print('Public files checked and staged.')
           PY
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: ${{ runner.temp }}/ieltsquirrel-pages
-      - name: Deploy website
+          path: ${{ runner.temp }}/site-pages
+      - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
