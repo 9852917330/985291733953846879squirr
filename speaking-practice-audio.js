@@ -1,8 +1,7 @@
 (() => {
   'use strict';
-  const entries = window.SPEAKING_PRACTICE_AUDIO || [];
   const normal = text => String(text || '').replace(/\s+/g, ' ').trim();
-  const byQuestion = new Map(entries.map(item => [normal(item.question), item]));
+  let entriesSource=null,byQuestion=new Map();
   const players = new Map();
   let scheduled = false;
   function removePlayer(version) {
@@ -37,6 +36,7 @@
   }
   function syncPlayers() {
     scheduled = false;
+    if(entriesSource!==window.SPEAKING_PRACTICE_AUDIO){entriesSource=window.SPEAKING_PRACTICE_AUDIO;byQuestion=new Map((entriesSource||[]).map(item=>[normal(item.question),item]));}
     const question = document.getElementById('spQuestion');
     const item = question && byQuestion.get(normal(question.textContent));
     const answer = document.getElementById('spAnswer');

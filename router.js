@@ -3,10 +3,14 @@
   const byFile = new Map(Object.entries(routes).map(([hash, r]) => [r.file, hash]));
   const base = new URL('./', document.currentScript?.src || new URL('router.js', document.baseURI).href);
   function hash() {
-    if (location.hash) return location.hash;
-    return byFile.get(decodeURIComponent(location.pathname.split('/').pop()) || 'index.html') || '#home';
+    if (routes[location.hash]) return location.hash;
+    let file = location.pathname.split('/').pop() || 'index.html';
+    try { file = decodeURIComponent(file); } catch (_) {}
+    return byFile.get(file) || '#home';
   }
-  function url(key) { return new URL(routes[key]?.file || ('index.html'+key), base).href; }
+  function url(key) {
+    return new URL(key === '#home' ? './' : (routes[key]?.file || ('index.html'+key)), base).href;
+  }
   function refresh() {
     const key = hash(), entry = routes[key];
     if (!entry) return;
