@@ -1,5 +1,5 @@
 {
-  "version": "2026.10.17-v141-practice-simple-audio-batch2",
+  "version": "2026.10.18-v142-practice-simple-audio-batch3",
   "phrase_meanings": 4195,
   "band_estimates": false,
   "speaking_practice_audio": 1000,
@@ -27,10 +27,10 @@
   "speaking_part2_simple_audio_batch": 4,
   "audio_answer_labels": false,
   "custom_launch_splash": false,
-  "speaking_practice_simple_audio": 500,
-  "speaking_practice_simple_audio_batch": 2,
+  "speaking_practice_simple_audio": 750,
+  "speaking_practice_simple_audio_batch": 3,
   "speaking_practice_simple_audio_range": [
     1,
-    500
+    750
   ]
 }
