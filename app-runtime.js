@@ -318,7 +318,6 @@ window.SPEAKING_PRACTICE_UI = (() => {
 
 <div class="sp-modes" role="tablist" aria-label="Practice mode">
   <button class="sp-mode active" type="button" data-mode="random" id="sp-tab-random" role="tab" aria-controls="spStage"><i>↻</i>Random</button>
-  <button class="sp-mode" type="button" data-mode="audio" id="sp-tab-audio" role="tab" aria-controls="spStage"><i>▶</i>Audio</button>
   <button class="sp-mode" type="button" data-mode="ielts" id="sp-tab-ielts" role="tab" aria-controls="spStage"><i>I</i>IELTS</button>
   <button class="sp-mode" type="button" data-mode="topics" id="sp-tab-topics" role="tab" aria-controls="spTopics"><i>#</i>Topics</button>
   <button class="sp-mode" type="button" data-mode="thought" id="sp-tab-thought" role="tab" aria-controls="spStage"><i>→</i>Scenarios</button>
@@ -382,14 +381,7 @@ window.SPEAKING_PRACTICE_UI = (() => {
     if (!next && state.prompt) return;
     const d = DATA();
     state.cues = [];
-    if (state.mode === 'audio') {
-      const bank = window.SPEAKING_PRACTICE_AUDIO || [];
-      const item = pick(bank, 'audio');
-      state.prompt = item ? item.question : '';
-      state.cues = item && item.cues ? item.cues : [];
-      state.topicName = topicForPrompt(state.prompt);
-      els.meta.textContent = `AUDIO · ${bank.length} QUESTIONS`;
-    } else if (state.mode === 'ielts') {
+    if (state.mode === 'ielts') {
       const p = part();
       const item = pick(d.ielts[p], 'ielts-' + p);
       if (p === 2 && item && typeof item === 'object') { state.prompt = item.q; state.cues = item.cues || []; }
@@ -526,7 +518,8 @@ window.SPEAKING_PRACTICE_UI = (() => {
   }
 
   function mount(container) {
-    const saved=history.state?.practice;
+    const previous = history.state?.practice;
+    const saved = previous?.mode === 'audio' ? null : previous;
     unmount();
     root = container;
     root.className = 'sp-main';
